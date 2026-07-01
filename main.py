@@ -7,6 +7,7 @@ continue playing. Thank me later.
 
 import time
 import argparse
+from colorama import init as colorama_init, Fore, Style
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -16,6 +17,8 @@ from selenium.common.exceptions import (
     StaleElementReferenceException,
 )
 
+colorama_init(autoreset=True)
+
 
 MODAL_XPATH = "//*[contains(@class, 'modal') and contains(@class, 'eHuW')]"
 
@@ -23,6 +26,20 @@ MODAL_XPATH = "//*[contains(@class, 'modal') and contains(@class, 'eHuW')]"
 DEFAULT_POLL_INTERVAL = 0.005 # How lower, how faster the window closes. This is like a "brake" for the polling.
 IFRAME_SELECTOR = None
 
+
+def print_intro():
+    banner = r"""
+   _____                       __
+  / ___/____  ____  ____ ______/ /____  __________
+  \__ \/ __ \/ __ \/ __ `/ ___/ __/ _ \/ ___/ ___/ 
+ ___/ / /_/ / / / / /_/ (__  ) /_/  __/ /  / /  
+/____/\____/_/ /_/\__, /____/\__/\___/_/  /_/  
+                  /____/    Pause Bypasser
+"""
+    print(Fore.MAGENTA + Style.BRIGHT + banner)
+    print(Fore.CYAN + Style.BRIGHT + "Songsterr Pause Bypasser" + Style.RESET_ALL)
+    print(Fore.YELLOW + "-" * 55 + Style.RESET_ALL)
+ 
 
 def get_driver():
     options = webdriver.ChromeOptions()
@@ -71,14 +88,15 @@ def watch_loop(driver, poll_interval: float = DEFAULT_POLL_INTERVAL):
             try:
                 try_click_continue(driver)
             except Exception as e:
-                print(f"Poll error (ignored): {e}")
+                print(Fore.LIGHTBLUE_EX + Style.BRIGHT + "Bye!" + Style.RESET_ALL) 
+                exit()
             time.sleep(poll_interval)
     except KeyboardInterrupt:
         print("Stopped watching.")
 
 
 if __name__ == "__main__":
-    print("Songsterr Pause Bypasser")
+    print_intro()
     parser = argparse.ArgumentParser(
         description="Bypass the 'Pause' popup with ease"
     )
