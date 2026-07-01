@@ -88,8 +88,11 @@ def watch_loop(driver, poll_interval: float = DEFAULT_POLL_INTERVAL):
             try:
                 try_click_continue(driver)
             except Exception as e:
-                print(Fore.LIGHTBLUE_EX + Style.BRIGHT + "Bye!" + Style.RESET_ALL) 
-                exit()
+                if e == StaleElementReferenceException:
+                    print(Fore.RED + Style.BRIGHT + f"ERROR!: {e}" + Style.RESET_ALL) 
+                else:
+                    exit()
+
             time.sleep(poll_interval)
     except KeyboardInterrupt:
         print("Stopped watching.")
