@@ -123,8 +123,7 @@ def inject_watcher(driver):
 def _search_current_context(driver) -> bool:
     found_something = False
 
-    # Hide/neutralize the blur overlays FIRST so they can't intercept
-    # the click on the continue link underneath.
+
     for xpath, label in ((BLUR_XPATH, "blur overlay"), (CONTROLS_BLUR_XPATH, "controls blur overlay")):
         elements = driver.find_elements(By.XPATH, xpath)
         elements = [e for e in elements if e.is_displayed()]
@@ -141,14 +140,6 @@ def _search_current_context(driver) -> bool:
             except (StaleElementReferenceException, WebDriverException):
                 pass
 
-    # NOTE: We deliberately do NOT click the continue link from Python.
-    # The JS_WATCHER (injected in-browser) owns clicking exclusively.
-    # If both Python and JS click the same link, the second click can
-    # land after React has already unmounted/replaced it, missing
-    # React's own preventDefault() and falling through to Songsterr's
-    # global same-origin-link handler, which does a soft navigation
-    # (history.pushState) that resets the player/router state - this
-    # is what wipes out the playhead. One clicker only, avoids the race.
     modals = driver.find_elements(By.XPATH, MODAL_XPATH)
     modals = [m for m in modals if m.is_displayed()]
     if modals:
