@@ -29,7 +29,9 @@ JS_WATCHER = r"""
   window.__pauseBypasserInstalled = true;
 
   function findModal(root) {
-    return root.querySelector("[class*='modal'][class*='eHuW']");
+    var el = root.querySelector("[class*='modal'][class*='eHuW']");
+    if (!el || el.dataset.pbHandled === '1') return null;
+    return el;
   }
 
   function findBlur(root) {
@@ -40,37 +42,35 @@ JS_WATCHER = r"""
     return root.querySelector("[class*='controlsBlurOverlay']");
   }
 
-  function hideVisualOnly(el) {
-    try {
-      el.style.setProperty('opacity', '0', 'important');
-    } catch (e) {}
-  }
-
   function hideFully(el) {
     try {
-      el.style.setProperty('opacity', '0', 'important');
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
       el.style.setProperty('pointer-events', 'none', 'important');
     } catch (e) {}
   }
 
+  function tapPlayPauseTwice() {
+    var btn = document.getElementById('control-play');
+    if (!btn) return;
+    btn.click();
+    setTimeout(function() {
+      var btn2 = document.getElementById('control-play');
+      if (btn2) btn2.click();
+    }, 150);
+  }
+
   function handle() {
-    var modal = findModal(document);
     var blur = findBlur(document);
     var controlsBlur = findControlsBlur(document);
-
     if (blur) hideFully(blur);
     if (controlsBlur) hideFully(controlsBlur);
 
+    var modal = findModal(document);
     if (modal) {
-
-      var continueLink = modal.querySelector("[class*='continueLink'] a");
-      if (continueLink && !continueLink.__pbClicked) {
-        continueLink.__pbClicked = true;
-        try {
-          continueLink.click(); 
-        } catch (e) {}
-      }
-      hideVisualOnly(modal);
+      modal.dataset.pbHandled = '1';
+      hideFully(modal);
+      tapPlayPauseTwice();
     }
   }
 
@@ -121,7 +121,6 @@ def inject_watcher(driver):
 def _search_current_context(driver) -> bool:
     found_something = False
 
-
     for xpath, label in ((BLUR_XPATH, "blur overlay"), (CONTROLS_BLUR_XPATH, "controls blur overlay")):
         elements = driver.find_elements(By.XPATH, xpath)
         elements = [e for e in elements if e.is_displayed()]
@@ -142,13 +141,28 @@ def _search_current_context(driver) -> bool:
     modals = [m for m in modals if m.is_displayed()]
     if modals:
         modal = modals[0]
+
         try:
             driver.execute_script(
-                "arguments[0].style.setProperty('opacity','0','important');",
+                "arguments[0].style.setProperty('display','none','important');"
+                "arguments[0].style.setProperty('visibility','hidden','important');"
+                "arguments[0].style.setProperty('pointer-events','none','important');",
                 modal,
             )
+            print("Hid the modal.")
             found_something = True
         except (StaleElementReferenceException, WebDriverException):
+            pass
+
+        try:
+            play_button = driver.find_element(By.ID, "control-play")
+            play_button.click()
+            time.sleep(0.15)
+            play_button = driver.find_element(By.ID, "control-play")
+            play_button.click()
+            print("Double-tapped the play/pause button.")
+            found_something = True
+        except (NoSuchElementException, ElementClickInterceptedException, ElementNotInteractableException, StaleElementReferenceException, WebDriverException):
             pass
 
     return found_something
