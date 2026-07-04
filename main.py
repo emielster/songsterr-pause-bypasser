@@ -58,18 +58,16 @@ JS_WATCHER = r"""
     var blur = findBlur(document);
     var controlsBlur = findControlsBlur(document);
 
-    // Neutralize the overlays FIRST so nothing can intercept the click.
     if (blur) hideFully(blur);
     if (controlsBlur) hideFully(controlsBlur);
 
     if (modal) {
-      // Look specifically for the "continue with sync pauses" link,
-      // not "Use Synth" or "Upgrade".
+
       var continueLink = modal.querySelector("[class*='continueLink'] a");
       if (continueLink && !continueLink.__pbClicked) {
         continueLink.__pbClicked = true;
         try {
-          continueLink.click(); // real DOM click, bubbles to React handlers
+          continueLink.click(); 
         } catch (e) {}
       }
       hideVisualOnly(modal);
